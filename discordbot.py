@@ -1,4 +1,3 @@
-import asyncio
 import os
 from datetime import datetime
 
@@ -19,7 +18,9 @@ intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents
+bot = commands.Bot(
+    command_prefix="!",
+    intents=intents
 )
 
 active_sessions = {}
@@ -104,10 +105,5 @@ async def on_message(message):
         await bot.process_commands(message)
 
 # ── 3. ASYNC RUN ENGINE ───────────────────────────────────────────────────────
-async def main():
-    async with bot:
-        await bot.start(DISCORD_TOKEN)
-
 if __name__ == "__main__":
-    # Explicit loop control forces compliance with container threads
-    asyncio.run(main())
+    bot.run(DISCORD_TOKEN)
