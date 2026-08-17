@@ -6,9 +6,6 @@ import discord
 from discord.ext import commands
 from pytz import timezone
 
-# Custom Module Import
-from argos import generate_response
-
 # Pull tokens directly from Render Environment variables
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 
@@ -97,13 +94,18 @@ async def on_message(message):
 
     if channel_id in active_sessions:
         try:
+            # 💡 DEFERRED IMPORT: Imports argos only when a message arrives
+            from argos import generate_response
             response = generate_response(message.content)
             await message.channel.send(response if response and response.strip() else "I couldn't generate a response. Please try again.")
         except Exception as e:
             await message.channel.send("Sorry, I couldn't process your request. Please try again later.")
             print(f"Error: {type(e).__name__}: {e}")
+            
     elif user_id in dm_sessions and isinstance(message.channel, discord.DMChannel):
         try:
+            # 💡 DEFERRED IMPORT: Imports argos only when a message arrives
+            from argos import generate_response
             response = generate_response(message.content)
             await message.channel.send(response if response and response.strip() else "I couldn't generate a response. Please try again.")
         except Exception as e:
