@@ -1,26 +1,9 @@
-# Core dependencies (always required)
 discord.py==2.4.0
+Flask==3.0.3
+gunicorn==22.0.0
 python-dotenv==1.0.1
-python-telegram-bot==21.9
 pytz==2024.1
-
-# ── AI Provider SDKs ──────────────────────────────────────────────────────────
-# Install only the one matching your AI_PROVIDER setting in .env
-#
-# AI_PROVIDER=openai      → pip install openai
-# AI_PROVIDER=anthropic   → pip install anthropic
-# AI_PROVIDER=google      → pip install google-generativeai
-# AI_PROVIDER=together    → pip install together
-# AI_PROVIDER=groq        → pip install groq
-# AI_PROVIDER=cohere      → pip install cohere
-# AI_PROVIDER=mistral     → pip install mistralai
-# AI_PROVIDER=openrouter  → pip install openai  (uses OpenAI-compatible API)
-#
-# Or just install all of them:
+requests==2.34.2
 openai==1.55.3
-anthropic==0.40.0
-google-generativeai==0.8.3
-together==1.3.10
-groq==0.13.1
-cohere==5.13.5
-mistralai==1.2.5
+
+
