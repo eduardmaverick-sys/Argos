@@ -1,28 +1,3 @@
-import os
-import asyncio
-from datetime import datetime
-from threading import Thread
-import discord
-from discord.ext import commands
-from pytz import timezone
-
-# Pull tokens directly from Render Environment variables
-DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
-
-# ── 1. FLASK ENVIRONMENT CONFIGURATION ────────────────────────────────────────
-from flask import Flask
-app = Flask("")
-
-@app.route("/")
-def home():
-    return "Argos Bot Web Gateway is online!"
-
-def run_web_server():
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
-
-# Spin up web endpoint instantly so Gunicorn never times out
-Thread(target=run_web_server, daemon=True).start()
 
 # ── 2. DISCORD ENGINE ROUTINES ────────────────────────────────────────────────
 intents = discord.Intents.default()
@@ -94,7 +69,6 @@ async def on_message(message):
 
     if channel_id in active_sessions:
         try:
-            # 💡 DEFERRED IMPORT: Imports argos only when a message arrives
             from argos import generate_response
             response = generate_response(message.content)
             await message.channel.send(response if response and response.strip() else "I couldn't generate a response. Please try again.")
@@ -104,7 +78,6 @@ async def on_message(message):
             
     elif user_id in dm_sessions and isinstance(message.channel, discord.DMChannel):
         try:
-            # 💡 DEFERRED IMPORT: Imports argos only when a message arrives
             from argos import generate_response
             response = generate_response(message.content)
             await message.channel.send(response if response and response.strip() else "I couldn't generate a response. Please try again.")
@@ -114,12 +87,11 @@ async def on_message(message):
     else:
         await bot.process_commands(message)
 
-# ── 3. ASYNC ENGINE LOOP ──────────────────────────────────────────────────────
-def run_discord_bot():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(bot.start(DISCORD_TOKEN))
+# ── 3. ASYNC RUN ENGINE ───────────────────────────────────────────────────────
+async def main():
+    async with bot:
+        await bot.start(DISCORD_TOKEN)
 
 if __name__ == "__main__":
-    # Boot the bot connection inside an independent runtime loop
-    Thread(target=run_discord_bot, daemon=True).start()
+    # Explicit loop control forces compliance with container threads
+    asyncio.run(main())
