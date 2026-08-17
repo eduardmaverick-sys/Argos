@@ -1,14 +1,38 @@
+import os
+from datetime import datetime
+from threading import Thread
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import os
-from argos import generate_response
-from datetime import datetime
+from flask import Flask
 from pytz import timezone
+
+# Custom Module Import
+from argos import generate_response
 
 load_dotenv()
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+
+# ── 💡 ADDED FOR RENDER HEALTH CHECKS ──────────────────────────────────────────
+# Gunicorn looks for this exact 'app' variable to route web pings.
+app = Flask("")
+
+
+@app.route("/")
+def home():
+    return "Argos Bot is alive and well!"
+
+
+def run_web_server():
+    # Render automatically sets the PORT environment variable dynamically
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
+
+
+# Start the background thread so the web server runs alongside the bot
+Thread(target=run_web_server).start()
+# ───────────────────────────────────────────────────────────────────────────────
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -24,12 +48,11 @@ def log_interaction(user):
     log_entry = [
         user.name,
         user.id,
-        datetime.now(timezone("Asia/Manila")).strftime("%d-%b-%Y %I:%M %p")
+        datetime.now(timezone("Asia/Manila")).strftime("%d-%b-%Y %I:%M %p"),
     ]
 
     # Render automatically captures this print statement and displays it in your live dashboard logs 24/7!
     print(f"BOT_LOG: {log_entry}")
-
 
 
 @bot.event
@@ -70,9 +93,7 @@ async def stop_debate(ctx):
         )
 
     else:
-        await ctx.send(
-            "No active debate session in this channel or DM."
-        )
+        await ctx.send("No active debate session in this channel or DM.")
 
     log_interaction(ctx.author)
 
@@ -124,9 +145,8 @@ async def on_message(message):
             )
             print(f"Error: {type(e).__name__}: {e}")
 
-    elif (
-        user_id in dm_sessions
-        and isinstance(message.channel, discord.DMChannel)
+    elif user_id in dm_sessions and isinstance(
+        message.channel, discord.DMChannel
     ):
         try:
             response = generate_response(message.content)
