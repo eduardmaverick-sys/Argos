@@ -1,35 +1,33 @@
 import os
+import asyncio
 from datetime import datetime
 from threading import Thread
-import asyncio
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
-from flask import Flask
 from pytz import timezone
 
 # Custom Module Import
 from argos import generate_response
 
-load_dotenv()
+# Pull tokens directly from Render Environment variables
+DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-
-# ── FLASK HEALTH CHECK WEB SERVER ─────────────────────────────────────────────
+# ── 1. FLASK ENVIRONMENT CONFIGURATION ────────────────────────────────────────
+from flask import Flask
 app = Flask("")
 
 @app.route("/")
 def home():
-    return "Argos Bot is alive and well!"
+    return "Argos Bot Web Gateway is online!"
 
 def run_web_server():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
-# Start the Flask web server thread instantly
-Thread(target=run_web_server).start()
+# Spin up web endpoint instantly so Gunicorn never times out
+Thread(target=run_web_server, daemon=True).start()
 
-# ── DISCORD BOT SETUP ─────────────────────────────────────────────────────────
+# ── 2. DISCORD ENGINE ROUTINES ────────────────────────────────────────────────
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
@@ -49,7 +47,7 @@ def log_interaction(user):
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    print(f"✅ SUCCESS: Logged into Discord Gateway as {bot.user}")
 
 @bot.command(name="start")
 async def start_debate(ctx):
@@ -114,12 +112,12 @@ async def on_message(message):
     else:
         await bot.process_commands(message)
 
-# ── 💡 NON-BLOCKING ASYNC ENGINE LOOP FOR DEPLOYMENT ──────────────────────────
+# ── 3. ASYNC ENGINE LOOP ──────────────────────────────────────────────────────
 def run_discord_bot():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(bot.start(DISCORD_TOKEN))
 
 if __name__ == "__main__":
-    # Boot the bot in its own sub-thread loop so Gunicorn has access to Flask's 'app'
-    Thread(target=run_discord_bot).start()
+    # Boot the bot connection inside an independent runtime loop
+    Thread(target=run_discord_bot, daemon=True).start()
