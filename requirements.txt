@@ -5,5 +5,7 @@ python-dotenv==1.0.1
 pytz==2024.1
 requests==2.34.2
 openai==1.55.3
+audioop-lts
+
 
 
